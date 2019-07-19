@@ -2,9 +2,14 @@ import React, { Component } from "react"
 import {Link, withRouter} from 'react-router-dom'
 import {Menu, Icon} from 'antd'
 
-import logo from '../../assets/images/logo.png'
+
 import menuList from '../../config/menuConfig'
+import logo from '../../assets/images/logo.png'
+
 import './index.less'
+
+
+
 
 const {SubMenu} = Menu
 
@@ -42,48 +47,48 @@ const {SubMenu} = Menu
             return pre
         },[])
     }
-    getMenuNodes = (menuList) => {
-        const path = this.props.location.pathname
+    // getMenuNodes = (menuList) => {
+    //     const path = this.props.location.pathname
 
-        return menuList.map(item => {
-            if (!item.children) {
-                return (
-                    <Menu.Item key={item.key}>
-                        <Link to={item.key}>
-                            <span>
-                            <Icon type={item.icon}/>
-                            <span>{item.title}</span>
-                            </span>
-                        </Link>
-                    </Menu.Item>
-                )
-            }else {
-                if (item.children.find(cItem => path.indexOf(cItem.key)=== 0)){
-                this.openKey = item.key
-            }
-            return (
-                <SubMenu
-                key={item.key}
-                title={
-                    <span>
-                        <Icon type={item.icon}/>
-                        <span>{item.title}</span>
-                    </span>
-                }>
-                    {this.getMenuNodes(item.children)}
-                </SubMenu>
-            )
-            }
-        })
-    }
+    //     return menuList.map(item => {
+    //         if (!item.children) {
+    //             return (
+    //                 <Menu.Item key={item.key}>
+    //                     <Link to={item.key}>
+    //                         <span>
+    //                         <Icon type={item.icon}/>
+    //                         <span>{item.title}</span>
+    //                         </span>
+    //                     </Link>
+    //                 </Menu.Item>
+    //             )
+    //         }else {
+    //             if (item.children.find(cItem => path.indexOf(cItem.key)=== 0)){
+    //             this.openKey = item.key
+    //         }
+    //         return (
+    //             <SubMenu
+    //             key={item.key}
+    //             title={
+    //                 <span>
+    //                     <Icon type={item.icon}/>
+    //                     <span>{item.title}</span>
+    //                 </span>
+    //             }>
+    //                 {this.getMenuNodes(item.children)}
+    //             </SubMenu>
+    //         )
+    //         }
+    //     })
+    // }
     componentDidMount () {
     
     }
     componentWillMount () {
-        this.getMenuNodes = this.getMenuNodes2(menuList)
+        this.menuNodes = this.getMenuNodes2(menuList)
     }
     render() {
-        console.log('left-nsv render()')
+        console.log('left-nav render()')
         const selectKey = this.props.location.pathname
     
         return (
@@ -92,7 +97,7 @@ const {SubMenu} = Menu
                     <img src={logo} alt="logo"/>
                     <h1>硅谷后台</h1>
                 </Link>
-                {}
+                
                 <Menu 
                selectedKeys={[selectKey]}
                defaultOpenKeys={[this.openKey]}

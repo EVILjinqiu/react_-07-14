@@ -18,3 +18,47 @@ export const reqWeather = (city) => {
         })
     })
 }
+export const reqDeleteImg = (name) => ajax.post(BASE + '/manage/img/delete', {name})
+
+
+export const reqCategorys = () => ajax(BASE + '/manage/category/list')
+
+// 获取一个分类
+export const reqCategory = (categoryId) => ajax.get(BASE + '/manage/category/info', {
+    params: {
+      categoryId
+    }
+  })
+  
+
+export const reqAddOrUpdateProduct = (product) => ajax.post(BASE + '/manage/product/' + ( product._id?'update':'add'), product)
+
+// 添加分类
+export const reqAddCategory = (categoryName) => ajax.post(BASE + '/manage/category/add', {
+    categoryName
+})
+// 修改分类
+export const reqUpdateCategory = ({categoryId, categoryName}) => ajax.post(BASE + '/manage/category/update', {categoryId, categoryName})
+// 获取商品分页列表
+export const reqProducts = (pageNum, pageSize) => ajax(BASE + '/manage/product/list', {
+    params: { // 包含所有query参数的对象
+      pageNum,
+      pageSize
+    }
+  })
+
+// 更新商品的状态(上架/下架)
+export const reqUpdateStatus = (productId, status) => ajax.post(BASE + '/manage/product/updateStatus', {productId, status})
+
+
+/*
+  搜索商品分页列表 (根据商品名称/商品描述)
+searchType: 搜索的类型, productName/productDesc
+ */
+export const reqSearchProducts = ({pageNum, pageSize, searchName, searchType}) => ajax.get(BASE + '/manage/product/search', {
+  params: {
+    pageNum,
+    pageSize,
+    [searchType]: searchName,
+  }
+})

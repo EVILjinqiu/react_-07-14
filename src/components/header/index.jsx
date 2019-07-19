@@ -20,7 +20,7 @@ import './index.less'
      }
      logout =() => {
          Modal.confirm({
-             title: '确定退出吗',
+             title: '狠心退出!',
              onOk: () => {
                  console.log('ok');
                  storageUtils.removeUser()
