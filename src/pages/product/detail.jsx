@@ -1,4 +1,5 @@
-import React, {Component} from 'react'
+import React, { Component } from 'react'
+import { Redirect } from 'react-router-dom'
 import {
   Card,
   Icon,
@@ -6,87 +7,83 @@ import {
 } from 'antd'
 
 import LinkButton from '../../components/link-button'
-import {BASE_IMG_URL} from '../../utils/constants'
+import memoryUtils from '../../utils/memoryUtils'
+import { BASE_IMG } from '../../utils/Constants'
 import {reqCategory} from '../../api'
 
 const Item = List.Item
 
-
-/*
-Product的详情子路由组件
- */
+/* 
+商品详情路由组件
+*/
 export default class ProductDetail extends Component {
 
   state = {
-    categoryName: '', // 分类名称
+    categoryName: ''
   }
 
-  async componentDidMount () {
-    const {categoryId} = this.props.location.state.product
+  getCategory = async (categoryId) => {
     const result = await reqCategory(categoryId)
-    const categoryName = result.data.name
-    this.setState({ categoryName })
+    if (result.status===0) {
+      const categoryName = result.data.name
+      this.setState({ categoryName })
+    }
+  }
+
+  componentDidMount () {
+    const product = memoryUtils.product
+    if (product._id) {
+      this.getCategory(product.categoryId)
+    }
   }
 
   render() {
-
-    // 读取携带过来的state数据
-    const {name, desc, price, detail, imgs} = this.props.location.state.product
     const { categoryName } = this.state
-
+    const product = memoryUtils.product
+    debugger
+    if (!product || !product._id) {
+      return <Redirect to="/product"/>
+    }
     const title = (
       <span>
-        <LinkButton>
-          <Icon
-            type='arrow-left'
-            style={{marginRight: 10, fontSize: 20}}
-            onClick={() => this.props.history.goBack()}
-          />
+        <LinkButton onClick={() => this.props.history.goBack()}>
+          <Icon type="arrow-left"/>
         </LinkButton>
-
         <span>商品详情</span>
       </span>
     )
     return (
-      <Card title={title} className='product-detail'>
+      <Card title={title} className="detail">
         <List>
           <Item>
-            <span className="left">商品名称:</span>
-            <span>{name}</span>
+            <span className="detail-left">商品名称:</span>
+            <span>{product.name}</span>
           </Item>
           <Item>
-            <span className="left">商品描述:</span>
-            <span>{desc}</span>
+            <span className="detail-left">商品描述:</span>
+            <span>{product.desc}</span>
           </Item>
           <Item>
-            <span className="left">商品价格:</span>
-            <span>{price}元</span>
+            <span className="detail-left">商品价格:</span>
+            <span>{product.price}元</span>
           </Item>
           <Item>
-            <span className="left">所属分类:</span>
-            <span>{ categoryName }</span>
+            <span className="detail-left">所属分类:</span>
+            <span>{categoryName}</span>
           </Item>
           <Item>
-            <span className="left">商品图片:</span>
+            <span className="detail-left">商品图片:</span>
             <span>
               {
-                imgs.map(img => (
-                  <img
-                    key={img}
-                    src={BASE_IMG_URL + img}
-                    className="product-img"
-                    alt="img"
-                  />
-                ))
+                product.imgs.map(img => <img className="detail-img" key={img} src={BASE_IMG + img} alt="img" />)
               }
+              
             </span>
           </Item>
           <Item>
-            <span className="left">商品详情:</span>
-            <span dangerouslySetInnerHTML={{__html: detail}}>
-            </span>
+            <span className="detail-left">商品详情:</span>
+            <div dangerouslySetInnerHTML={{ __html: product.detail}}></div>
           </Item>
-
         </List>
       </Card>
     )

@@ -5,177 +5,187 @@ import {
   Input,
   Button,
   Icon,
-  message,
-  Table
+  Table,
+  message
 } from 'antd'
 
+import { reqProducts, reqSearchProducts, reqUpdateStatus } from '../../api'
 import LinkButton from '../../components/link-button'
-import {reqProducts, reqSearchProducts, reqUpdateStatus} from '../../api'
-import {PAGE_SIZE} from '../../utils/constants'
+import { PAGE_SIZE } from '../../utils/Constants'
+import memoryUtils from '../../utils/memoryUtils';
 
 const Option = Select.Option
-
-/*
-Product的默认子路由组件
- */
+/* 
+商品管理的首页组件
+*/
 export default class ProductHome extends Component {
-
+  
   state = {
+    loading: false,
+    products: [], // 商品列表
     total: 0, // 商品的总数量
-    products: [], // 商品的数组
-    loading: false, // 是否正在加载中
+    searchType: 'productName', // 默认是按商品名称搜索
     searchName: '', // 搜索的关键字
-    searchType: 'productName', // 根据哪个字段搜索
   }
 
-  /*
-  初始化table的列的数组
-   */
-  initColumns = () => {
-    this.columns = [
-      {
-        title: '商品名称',
-        dataIndex: 'name',
-      },
-      {
-        title: '商品描述',
-        dataIndex: 'desc',
-      },
-      {
-        title: '价格',
-        dataIndex: 'price',
-        render: (price) => '¥' + price  // 当前指定了对应的属性, 传入的是对应的属性值
-      },
-      {
-        width: 100,
-        title: '状态',
-        // dataIndex: 'status',
-        render: (product) => {
-          const {status, _id} = product
-          const newStatus = status===1 ? 2 : 1
-          return (
-            <span>
-              <Button
-                type='primary'
-                onClick={() => this.updateStatus(_id, newStatus)}
-              >
-                {status===1 ? '下架' : '上架'}
-              </Button>
-              <span>{status===1 ? '在售' : '已下架'}</span>
-            </span>
-          )
-        }
-      },
-      {
-        width: 100,
-        title: '操作',
-        render: (product) => {
-          return (
-            <span>
-              {/*将product对象使用state传递给目标路由组件*/}
-              <LinkButton onClick={() => this.props.history.push('/product/detail', {product})}>详情</LinkButton>
-              <LinkButton onClick={() => this.props.history.push('/product/addupdate', product)}>修改</LinkButton>
-            </span>
-          )
-        }
-      },
-    ];
-  }
-
-  /*
-  获取指定页码的列表数据显示
-   */
-  getProducts = async (pageNum) => {
-    this.pageNum = pageNum // 保存pageNum, 让其它方法可以看到
-    this.setState({loading: true}) // 显示loading
-
-    const {searchName, searchType} = this.state
-    // 如果搜索关键字有值, 说明我们要做搜索分页
-    let result
-    if (searchName) {
-      result = await reqSearchProducts({pageNum, pageSize: PAGE_SIZE, searchName, searchType})
-    } else { // 一般分页请求
-      result = await reqProducts(pageNum, PAGE_SIZE)
-    }
-
-    this.setState({loading: false}) // 隐藏loading
-    if (result.status === 0) {
-      // 取出分页数据, 更新状态, 显示分页列表
-      const {total, list} = result.data
-      this.setState({
-        total,
-        products: list
-      })
-    }
-  }
-
-  /*
-  更新指定商品的状态
-   */
   updateStatus = async (productId, status) => {
+    // 计算更新后的值
+    status = status===1 ? 2 : 1
+    // 请求更新
     const result = await reqUpdateStatus(productId, status)
-    if(result.status===0) {
-      message.success('更新商品成功')
+    if (result.status===0) {
+      message.success('更新商品状态成功!')
+      // 获取当前页显示
       this.getProducts(this.pageNum)
     }
   }
 
-  componentWillMount () {
+  initColumns = () => {
+    this.columns = [
+      {
+        title: '商品名称',
+        dataIndex: 'name'
+      },
+      {
+        title: '商品描述',
+        dataIndex: 'desc'
+      },
+      {
+        title: '价格',
+        width: 100,
+        dataIndex: 'price',
+        render: (price) => '¥' + price
+      },
+      {
+        title: '状态',
+        width: 100,
+        // dataIndex: 'status',
+        render: ({_id, status}) => {
+          let btnText = '下架'
+          let text = '在售'
+          if (status === 2) {
+            btnText = '上架'
+            text = '已下架'
+          }
+          return (
+            <span>
+              <Button onClick={() => { this.updateStatus(_id, status)}}>{btnText}</Button><br />
+              <span>{text}</span>
+            </span>
+          )
+        }
+      },
+      
+      {
+        title: '操作',
+        width: 100,
+        render: (product) => (
+          <span>
+            <LinkButton 
+              onClick={() => {
+                // 在内存中保存product
+                memoryUtils.product = product
+                this.props.history.push('/product/detail')
+              }}
+            >
+              详情
+            </LinkButton>
+            <LinkButton
+              onClick={() => {
+                // 在内存中保存product
+                memoryUtils.product = product
+                this.props.history.push('/product/addupdate')
+              }}
+            >修改
+            
+            </LinkButton>
+          </span>
+        )
+      },
+    ]
+  }
+
+  /* 
+  异步获取指定页码商品分页(可能带搜索)列表显示
+  */
+  getProducts = async (pageNum) => {
+    // 保存当前请求的页码
+    this.pageNum = pageNum
+    const { searchName, searchType } = this.state
+    let result
+    // 发请求获取数据
+    if (!searchName) {
+      result = await reqProducts(pageNum, PAGE_SIZE)
+    } else {
+      result = await reqSearchProducts({ pageNum, pageSize: PAGE_SIZE, searchName, searchType })
+    }
+    
+    if (result.status === 0) {
+      // 取出数据
+      const { total, list } = result.data
+      // 更新状态
+      this.setState({
+        products: list,
+        total
+      })
+    }
+  }
+
+  componentWillMount() {
     this.initColumns()
   }
 
-  componentDidMount () {
+  componentDidMount() {
+    // 获取第一页显示
     this.getProducts(1)
   }
 
   render() {
 
-    // 取出状态数据
-    const {products, total, loading, searchType, searchName} = this.state
-
-
+    const { loading, products, total, searchType, searchName } = this.state
 
     const title = (
       <span>
-        <Select
-          value= {searchType}
-          style={{width: 150}}
-          onChange={value => this.setState({searchType:value})}
+        <Select 
+          style={{ width: 200 }} 
+          value={searchType} 
+          onChange={(value) => this.setState({ searchType: value })}
         >
-          <Option value='productName'>按名称搜索</Option>
-          <Option value='productDesc'>按描述搜索</Option>
+          <Option value="productName">按名称搜索</Option>
+          <Option value="productDesc">按描述搜索</Option>
         </Select>
-        <Input
-          placeholder='关键字'
-          style={{width: 150, margin: '0 15px'}}
+        <Input 
+          style={{ width: 200, margin: '0 10px' }} 
+          placeholder="关键字" 
           value={searchName}
-          onChange={event => this.setState({searchName:event.target.value})}
+          onChange={event => this.setState({searchName: event.target.value})}
         />
-        <Button type='primary' onClick={() => this.getProducts(1)}>搜索</Button>
+        <Button type="primary" onClick={() => this.getProducts(1) }>搜索</Button>
       </span>
     )
-
     const extra = (
-      <Button type='primary' onClick={() => this.props.history.push('/product/addupdate')}>
-        <Icon type='plus'/>
+      <Button type="primary" onClick={() => {
+        memoryUtils.product = {}
+        this.props.history.push('/product/addupdate')
+      }}>
+        <Icon type="plus" />
         添加商品
       </Button>
     )
-
     return (
       <Card title={title} extra={extra}>
         <Table
-          bordered
-          rowKey='_id'
+          bordered={true}
+          rowKey="_id"
           loading={loading}
-          dataSource={products}
           columns={this.columns}
+          dataSource={products}
           pagination={{
-            current: this.pageNum,
             total,
             defaultPageSize: PAGE_SIZE,
             showQuickJumper: true,
-            onChange: this.getProducts
+            onChange: this.getProducts,
+            current: this.pageNum
           }}
         />
       </Card>
