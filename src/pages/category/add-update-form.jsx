@@ -13,11 +13,11 @@ class AddUpdateForm extends Component {
     static propTypes = {
         setForm: PropTypes.func.isRequired,
         categoryName: PropTypes.string,
-      }
-      componentWillMount () {
+    }
+    componentWillMount() {
         this.props.setForm(this.props.form)
-      }
-    
+    }
+
     render() {
         const { getFieldDecorator } = this.props.form
         const { categoryName } = this.props
@@ -28,7 +28,7 @@ class AddUpdateForm extends Component {
                         getFieldDecorator('categoryName', {
                             initialValue: categoryName || '',
                             rules: [
-                                {required: true, message: '分类名称必须输入'}
+                                { required: true, message: '分类名称必须输入' }
                             ]
                         })(
                             <Input type="text" placeholder="请输入分类名称"></Input>
